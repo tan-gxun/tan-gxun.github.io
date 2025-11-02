@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蚕桑小管家 AI 网页游戏</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #228b22;
+        }
+        .main-buttons {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 50px 0;
+        }
+        .task-button {
+            background-color: #90ee90;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+        .task-button:hover {
+            background-color: #3cb371;
+        }
+        .task-container, .drag-drop-container {
+            display: none;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .back-button {
+            background-color: #add8e6;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .back-button:hover {
+            background-color: #87ceeb;
+        }
+        .next-button {
+            background-color: #90ee90;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .next-button:hover {
+            background-color: #3cb371;
+        }
+        .task-content {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+        .flowchart {
+            flex: 1;
+            max-width: 400px;
+        }
+        .flowchart img {
+            width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+        }
+        .right-panel {
+            flex: 1;
+            max-width: 500px;
+        }
+        .problem-image {
+            width: 100%;
+            height: 200px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f9f9f9;
+        }
+        .question {
+            font-size: 18px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .choices {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .choice-button {
+            background-color: #add8e6;
+            border: none;
+            color: white;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            text-align: left;
+        }
+        .choice-button:hover:not(:disabled) {
+            background-color: #87ceeb;
+        }
+        .choice-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .feedback {
+            font-size: 16px;
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        .correct {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .incorrect {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .second-question {
+            display: none;
+        }
+        .next-div {
+            display: none;
+            margin-top: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        /* Drag Drop Styles */
+        .drag-drop-container .task-content {
+            align-items: flex-start;
+        }
+        .left-panel {
+            flex: 1;
+            position: relative;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 10px;
+            min-height: 600px;
+        }
+        .left-panel img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .drop-zone {
+            position: absolute;
+            border: 2px dashed #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(255, 255, 255, 0.8);
+            z-index: 10;
+            overflow: hidden;
+        }
+        .drop-zone img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .components-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+            width: 90%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .components-grid img {
+            width: 200px;
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: grab;
+        }
+        .components-grid img:active {
+            cursor: grabbing;
+        }
+        .complete-section {
+            text-align: center;
+            margin: 20px 0;
+        }
+        #drag-feedback {
+            margin-top: 10px;
+            display: inline-block;
+        }
+        /* Text Fill Styles for Problem 1 */
+        .text-fill-section {
+            display: none;
+            margin-bottom: 30px;
+        }
+        /*.sentence {*/
+        /*    font-size: 18px;*/
+        /*    margin-bottom: 20px;*/
+        /*    text-align: left !important;*/
+        /*    font-weight: bold;*/
+        /*    line-height: 1.5;*/
+        /*}*/
+        .sentence {
+            font-size: 18px;
+            margin-bottom: 20px;
+            text-align: left !important;  /* 加强：强制左对齐 */
+            font-weight: bold;
+            line-height: 1.5;
+        }
+        .sentence {
+            font-size: 18px;
+            margin-bottom: 20px;
+            text-align: left !important;  /* 保持左对齐，但不影响子span */
+            font-weight: bold;
+            line-height: 1.5;
+        }
+        .sentence p {
+            margin: 0 0 10px 0;
+            text-indent: 2em !important;  /* 首行缩进 */
+            text-align: left !important;
+        }
+        .sentence .indent {
+            margin-left: 40px;
+            text-align: left !important;
+        }
+        .blank {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 2px 8px;  /* 修复：padding左右均匀（原5px可能偏） */
+            border-radius: 3px;
+            min-width: 100px;
+            display: inline-block;
+            text-align: center !important;  /* 修复：!important 强制覆盖继承 */
+            cursor: pointer;
+            line-height: 1.2;  /* 新增：确保单行文本垂直居中 */
+
+        }
+        .fill-options {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        .fill-button {
+            background-color: #add8e6;
+            border: none;
+            color: white;
+            padding: 12px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .fill-button:hover:not(:disabled) {
+            background-color: #87ceeb;
+        }
+        .fill-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        .check-fill {
+            background-color: #90ee90;
+            margin-top: 20px;
+        }
+        .check-fill:hover {
+            background-color: #3cb371;
+        }
+        .drag-section {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- 主页面 -->
+    <div id="mainPage">
+        <h1>蚕桑小管家 AI 网页游戏</h1>
+        <div class="main-buttons">
+            <button class="task-button" onclick="startTask(1)">任务1: 桑叶检验</button>
+            <button class="task-button" onclick="startTask(2)">任务2: 蚕病判断</button>
+            <button class="task-button" onclick="startTask(3)">任务3: 蚕茧筛选</button>
+        </div>
+    </div>
+    <!-- 任务容器 (Quiz for 1&2) -->
+    <div id="taskContainer" class="task-container">
+        <div class="task-header">
+            <h2 id="taskTitle"></h2>
+            <button class="back-button" onclick="backToMain()">返回主页面</button>
+        </div>
+        <div class="task-content">
+            <!-- 左边：流程图 -->
+            <div class="flowchart">
+                <img id="flowchartImg" src="" alt="流程图" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmOGZmIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5mbG93Y2hhcnQucG5nPC90ZXh0Pjwvc3ZnPg=='">
+            </div>
+            <!-- 右边：问题面板 -->
+            <div class="right-panel">
+                <!-- 问题图片 -->
+                <div class="problem-image">
+                    <img id="problemImg1" src="" alt="问题图片" style="max-width:100%; max-height:100%;" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjlmOWY5Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5wcm9ibGVtXzEucG5nPC90ZXh0Pjwvc3ZnPg=='">
+                </div>
+                <div class="question" id="question1"></div>
+                <div class="choices" id="choices1">
+                    <button class="choice-button" id="choice1-1" onclick="selectChoice(1, 1)"></button>
+                    <button class="choice-button" id="choice1-2" onclick="selectChoice(1, 2)"></button>
+                </div>
+                <div class="feedback" id="feedback1"></div>
+                <!-- 第二问题 -->
+                <div class="second-question" id="secondQuestion">
+                    <div class="question" id="question2"></div>
+                    <div class="choices" id="choices2">
+                        <button class="choice-button" id="choice2-1" onclick="selectChoice(2, 1)"></button>
+                        <button class="choice-button" id="choice2-2" onclick="selectChoice(2, 2)"></button>
+                    </div>
+                    <div class="feedback" id="feedback2"></div>
+                    <div class="next-div" id="nextDiv">
+                        <button class="next-button" onclick="nextScenario()">下一张图片</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Drag Drop 容器 (for 3) -->
+    <div id="dragDropContainer" class="drag-drop-container">
+        <div class="task-header">
+            <h2 id="drag-title"></h2>
+            <button class="back-button" onclick="backToMain()">返回主页面</button>
+        </div>
+        <!-- 问题1: 文字填充 -->
+        <div id="textFillSection" class="text-fill-section">
+            <div class="sentence" id="sentence">
+                <p>收购点质检员正在分拣蚕茧，拿起一颗对农户说：“您看这颗，表面干爽无污垢，对着光有光泽，是优质的蚕茧。”又拿起另一颗，“这颗表面发黏带污垢，还没光泽，就是普通蚕茧。”。</p>
+                <p>请根据蚕茧分级的情境，用“如果……那么……否则……”的句式填空，完成蚕茧判断：</p>
+                <p>在蚕茧分级时，</p>
+                <p>如果（<span class="blank" id="blank1"></span>）：</p>
+                <p class="indent">那么<span class="blank" id="blank2"></span>，</p>
+                <p>否则：</p>
+                <p class="indent"><span class="blank" id="blank3"></span>。</p>
+            </div>
+            <div class="fill-options">
+                <button class="fill-button" id="option1" onclick="selectOption(1)">蚕茧外观干净有光泽</button>
+                <button class="fill-button" id="option2" onclick="selectOption(2)">是优质茧</button>
+                <button class="fill-button" id="option3" onclick="selectOption(3)">是普通茧</button>
+            </div>
+            <div class="complete-section">
+                <button class="next-button check-fill" id="checkFillBtn" onclick="checkTextFill()" disabled>填充完毕</button>
+                <div id="text-feedback" class="feedback"></div>
+            </div>
+        </div>
+        <!-- 问题2: 拖拽补充流程图 (显示在问题1下面) -->
+        <div id="dragSection" class="drag-section">
+            <div class="task-content">
+                <!-- 左边：待补充流程图 -->
+                <div class="left-panel">
+                    <img id="skeleton" src="" alt="流程图骨架" style="width:100%; height:auto; position:relative; z-index:1;">
+                    <!-- 预留位置：根据骨架图片调整 top/left -->
+                    <!-- 输入位置 -->
+                    <div id="input-zone" class="drop-zone" style="position:absolute; z-index:2;"></div>
+                    <!-- 判断位置 -->
+                    <div id="judgment-zone" class="drop-zone" style="position:absolute; z-index:2;"></div>
+                    <!-- 是分支位置 -->
+                    <div id="yes-zone" class="drop-zone" style="position:absolute; z-index:2;"></div>
+                    <!-- 否分支位置 -->
+                    <div id="no-zone" class="drop-zone" style="position:absolute; z-index:2;"></div>
+                </div>
+                <!-- 右边：组件 -->
+                <div class="right-panel">
+                    <h3>流程图组件</h3>
+                    <div id="components-list" class="components-grid"></div>
+                </div>
+            </div>
+            <div class="complete-section">
+                <button class="next-button" onclick="checkCompletion()">完成问题2</button>
+                <div id="drag-feedback" class="feedback"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let currentTask = 0;
+        let availableScenarios = [];
+        let currentScenario = null;
+        let currentCorrect = {};
+        let textBlanks = {}; // 存储文字填充状态 {1: text, 2: text, 3: text}
+        let fillOrder = []; // 记录点击顺序 [1,2,3]
+        let selectedOptions = []; // 已选择的选项索引
+        // 任务配置
+        const taskConfigs = {
+            1: { // 桑叶验收
+                title: "任务1: 桑叶检验",
+                flowchart: "photo/1.png",
+                scenarios: [
+                    {
+                        image: "photo/1-2.png",
+                        q1: "桑叶是否有虫洞？",
+                        c1_1: "有虫洞",
+                        c1_2: "没有虫洞",
+                        correct1: 2,
+                        q2: "接下来如何处理？",
+                        c2_1: "可喂食",
+                        c2_2: "不可喂食",
+                        correct2: 1
+                    },
+                    {
+                        image: "photo/1-1.png",
+                        q1: "桑叶是否有虫洞？",
+                        c1_1: "有虫洞",
+                        c1_2: "没有虫洞",
+                        correct1: 1,
+                        q2: "接下来如何处理？",
+                        c2_1: "可喂食",
+                        c2_2: "不可喂食",
+                        correct2: 2
+                    }
+                ]
+            },
+            2: { // 蚕病判断
+                title: "任务2: 蚕病判断",
+                flowchart: "photo/2.png",
+                scenarios: [
+                    {
+                        image: "photo/2-2.png",
+                        q1: "蚕体是否体色正常？",
+                        c1_1: "正常",
+                        c1_2: "不正常",
+                        correct1: 2,
+                        q2: "接下来如何处理？",
+                        c2_1: "隔离观察",
+                        c2_2: "正常喂养",
+                        correct2: 1
+                    },
+                    {
+                        image: "photo/2-1.png",
+                        q1: "蚕体是否体色正常？",
+                        c1_1: "正常",
+                        c1_2: "不正常",
+                        correct1: 1,
+                        q2: "接下来如何处理？",
+                        c2_1: "隔离观察",
+                        c2_2: "正常喂养",
+                        correct2: 2
+                    }
+                ]
+            },
+            3: { // 茧重筛选 - 问题1文字填充 + 问题2拖拽
+                title: "任务3: 蚕茧筛选",
+                skeleton: "photo/3.png",
+                textCorrect: [ // 正确顺序
+                    '蚕茧外观干净有光泽',
+                    '是优质茧',
+                    '是普通茧'
+                ],
+                components: [
+                    "photo/3-5.png",
+                    "photo/3-1.png",
+                    "photo/3-6.png",
+                    "photo/3-2.png",
+                    "photo/3-3.png",
+                    "photo/3-4.png",
+                    "photo/3-7.png"
+                ],
+                correctMapping: {
+                    input: "photo/3-1.png",
+                    judgment: "photo/3-2.png",
+                    yes: "photo/3-3.png",
+                    no: "photo/3-4.png"
+                }
+            }
+        };
+        function startTask(taskId) {
+            currentTask = taskId;
+            const config = taskConfigs[taskId];
+            document.getElementById('mainPage').style.display = 'none';
+            if (taskId <= 2) {
+                // Quiz 模式
+                document.getElementById('taskContainer').style.display = 'block';
+                document.getElementById('dragDropContainer').style.display = 'none';
+                document.getElementById('taskTitle').textContent = config.title;
+                document.getElementById('flowchartImg').src = config.flowchart;
+                availableScenarios = [...config.scenarios].sort(() => Math.random() - 0.5);
+                nextScenario();
+            } else if (taskId === 3) {
+                // 任务3: 文字填充 + 拖拽
+                document.getElementById('taskContainer').style.display = 'none';
+                document.getElementById('dragDropContainer').style.display = 'block';
+                setupTask3(config);
+            }
+        }
+        function nextScenario() {
+            if (availableScenarios.length === 0) {
+                alert('所有图片处理完成！任务完成！');
+                backToMain();
+                return;
+            }
+            currentScenario = availableScenarios.shift();
+            document.getElementById('problemImg1').src = currentScenario.image;
+            document.getElementById('question1').textContent = currentScenario.q1;
+            document.getElementById('choice1-1').textContent = currentScenario.c1_1;
+            document.getElementById('choice1-2').textContent = currentScenario.c1_2;
+            document.getElementById('question2').textContent = currentScenario.q2;
+            document.getElementById('choice2-1').textContent = currentScenario.c2_1;
+            document.getElementById('choice2-2').textContent = currentScenario.c2_2;
+            currentCorrect = {first: currentScenario.correct1, second: currentScenario.correct2};
+            resetToFirst();
+        }
+        function backToMain() {
+            document.getElementById('taskContainer').style.display = 'none';
+            document.getElementById('dragDropContainer').style.display = 'none';
+            document.getElementById('mainPage').style.display = 'block';
+            if (currentTask <= 2) {
+                resetAll();
+            } else {
+                resetTask3();
+            }
+        }
+        function resetAll() {
+            availableScenarios = [];
+            currentScenario = null;
+            resetToFirst();
+        }
+        function resetToFirst() {
+            document.getElementById('secondQuestion').style.display = 'none';
+            document.getElementById('nextDiv').style.display = 'none';
+            document.getElementById('feedback1').style.display = 'none';
+            document.getElementById('feedback2').style.display = 'none';
+            document.querySelectorAll('#choices1 .choice-button').forEach(btn => {
+                btn.disabled = false;
+                btn.style.backgroundColor = '#add8e6';
+                btn.className = 'choice-button';
+            });
+            document.querySelectorAll('#choices2 .choice-button').forEach(btn => {
+                btn.disabled = false;
+                btn.style.backgroundColor = '#add8e6';
+                btn.className = 'choice-button';
+            });
+            document.getElementById('feedback1').textContent = '';
+            document.getElementById('feedback1').className = 'feedback';
+            document.getElementById('feedback2').textContent = '';
+            document.getElementById('feedback2').className = 'feedback';
+        }
+        function selectChoice(questionNum, choiceNum) {
+            const feedbackId = `feedback${questionNum}`;
+            const choicesId = `choices${questionNum}`;
+            const feedbackEl = document.getElementById(feedbackId);
+            const choiceBtns = document.querySelectorAll(`#${choicesId} .choice-button`);
+            choiceBtns.forEach(btn => btn.disabled = true);
+            const key = (questionNum === 1 ? 'first' : 'second');
+            const isCorrect = choiceNum === currentCorrect[key];
+            const word = (questionNum === 1 ? '判断' : '执行');
+            const message = isCorrect ? `${word}正确！` : `${word}错误！请重试。`;
+            feedbackEl.textContent = message;
+            feedbackEl.className = `feedback ${isCorrect ? 'correct' : 'incorrect'}`;
+            feedbackEl.style.display = 'block';
+            if (questionNum === 1 && isCorrect) {
+                document.getElementById('secondQuestion').style.display = 'block';
+            } else if (questionNum === 1 && !isCorrect) {
+                setTimeout(() => {
+                    document.getElementById('feedback1').style.display = 'none';
+                    document.querySelectorAll('#choices1 .choice-button').forEach(btn => {
+                        btn.disabled = false;
+                        btn.style.backgroundColor = '#add8e6';
+                        btn.className = 'choice-button';
+                    });
+                }, 2000);
+            } else if (questionNum === 2) {
+                if (isCorrect) {
+                    document.getElementById('nextDiv').style.display = 'block';
+                } else {
+                    setTimeout(() => {
+                        document.getElementById('feedback2').style.display = 'none';
+                        document.querySelectorAll('#choices2 .choice-button').forEach(btn => {
+                            btn.disabled = false;
+                            btn.style.backgroundColor = '#add8e6';
+                            btn.className = 'choice-button';
+                        });
+                    }, 2000);
+                }
+            }
+        }
+        // 任务3专用设置
+        function setupTask3(config) {
+            document.getElementById('drag-title').textContent = config.title;
+            // 初始化文字填充
+            textBlanks = {};
+            fillOrder = [];
+            selectedOptions = [];
+            document.getElementById('textFillSection').style.display = 'block';
+            document.getElementById('dragSection').style.display = 'none';
+            document.getElementById('checkFillBtn').disabled = true;
+            // 设置拖拽部分（稍后显示）
+            document.getElementById('skeleton').src = config.skeleton;
+            const list = document.getElementById('components-list');
+            list.innerHTML = '';
+            config.components.forEach((src, index) => {
+                const img = document.createElement('img');
+                img.src = src;
+                img.dataset.originalSrc = src;
+                img.draggable = true;
+                img.id = `comp3_${index}`;
+                img.ondragstart = drag;
+                img.onerror = () => { img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2NjYyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjEyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+5Y2a5a6aPC90ZXh0Pjwvc3ZnPg=='; };
+                list.appendChild(img);
+            });
+            currentCorrect = config.correctMapping;
+            const zones = ['input-zone', 'judgment-zone', 'yes-zone', 'no-zone'];
+            zones.forEach(id => {
+                const zone = document.getElementById(id);
+                zone.ondragover = allowDrop;
+                zone.ondrop = drop;
+            });
+            resetTextBlanks();
+            resetDragDrop();
+            window.addEventListener('resize', adjustZones);
+        }
+        // 文字填充函数 - 点击选项填入下一个空白
+        function selectOption(optIndex) {
+            if (selectedOptions.includes(optIndex)) return;
+            const optionText = document.getElementById(`option${optIndex}`).textContent;
+            const nextBlankNum = fillOrder.length + 1;
+            if (nextBlankNum > 3) return;
+            const blank = document.getElementById(`blank${nextBlankNum}`);
+            blank.textContent = optionText;
+            blank.style.backgroundColor = '#add8e6';
+            blank.style.textAlign = 'center';  /* 修复：JS显式设置居中，覆盖任何继承 */
+            textBlanks[nextBlankNum] = optionText;
+            fillOrder.push(optIndex);
+            selectedOptions.push(optIndex);
+            document.getElementById(`option${optIndex}`).disabled = true;
+            if (fillOrder.length === 3) {
+                document.getElementById('checkFillBtn').disabled = false;
+            }
+        }
+        function checkTextFill() {
+            const correct = taskConfigs[3].textCorrect;
+            let isAllCorrect = true;
+            for (let i = 1; i <= 3; i++) {
+                if (textBlanks[i] !== correct[i-1]) {
+                    isAllCorrect = false;
+                    document.getElementById(`blank${i}`).style.backgroundColor = '#f8d7da';
+                } else {
+                    document.getElementById(`blank${i}`).style.backgroundColor = '#d4edda';
+                }
+            }
+            const feedbackEl = document.getElementById('text-feedback');
+            if (isAllCorrect) {
+                feedbackEl.textContent = '正确！问题1完成。现在进入问题2。';
+                feedbackEl.className = 'feedback correct';
+                feedbackEl.style.display = 'block';
+                document.getElementById('checkFillBtn').style.display = 'none';
+                setTimeout(() => {
+                    document.getElementById('textFillSection').querySelector('.complete-section').style.display = 'none';
+                    document.getElementById('textFillSection').querySelector('.fill-options').style.display = 'none';
+                    document.getElementById('dragSection').style.display = 'block';
+                    adjustZones();
+                }, 1500);
+            } else {
+                feedbackEl.textContent = '错误！请重新填写。';
+                feedbackEl.className = 'feedback incorrect';
+                feedbackEl.style.display = 'block';
+                setTimeout(() => {
+                    feedbackEl.style.display = 'none';
+                    resetTextBlanks();
+                }, 2000);
+            }
+        }
+        function resetTextBlanks() {
+            for (let i = 1; i <= 3; i++) {
+                const blank = document.getElementById(`blank${i}`);
+                blank.textContent = `[空白${i}]`;
+                blank.style.backgroundColor = '#fff3cd';
+            }
+            textBlanks = {};
+            fillOrder = [];
+            selectedOptions = [];
+            document.getElementById('checkFillBtn').disabled = true;
+            document.getElementById('checkFillBtn').style.display = 'block';
+            document.querySelectorAll('.fill-button').forEach(btn => {
+                btn.disabled = false;
+            });
+            document.getElementById('text-feedback').style.display = 'none';
+            document.getElementById('textFillSection').querySelector('.complete-section').style.display = 'block';
+            document.getElementById('textFillSection').querySelector('.fill-options').style.display = 'flex';
+        }
+        // 任务3重置
+        function resetTask3() {
+            resetTextBlanks();
+            document.getElementById('textFillSection').style.display = 'none';
+            document.getElementById('dragSection').style.display = 'none';
+            resetDragDrop();
+            window.removeEventListener('resize', adjustZones);
+        }
+        // Drag Drop 函数 (问题2)
+        function drag(ev) {
+            ev.dataTransfer.setData("text/plain", ev.target.id);
+        }
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+        function drop(ev) {
+            ev.preventDefault();
+            const data = ev.dataTransfer.getData("text/plain");
+            const dragged = document.getElementById(data);
+            const zone = ev.currentTarget;
+            if (zone.classList.contains('drop-zone') && zone.children.length === 0) {
+                dragged.style.width = '100%';
+                dragged.style.height = '100%';
+                dragged.style.objectFit = 'contain';
+                zone.appendChild(dragged);
+            }
+        }
+        function checkCompletion() {
+            const zones = {
+                input: document.getElementById('input-zone').querySelector('img')?.dataset.originalSrc || '',
+                judgment: document.getElementById('judgment-zone').querySelector('img')?.dataset.originalSrc || '',
+                yes: document.getElementById('yes-zone').querySelector('img')?.dataset.originalSrc || '',
+                no: document.getElementById('no-zone').querySelector('img')?.dataset.originalSrc || ''
+            };
+            let isCorrect = true;
+            Object.keys(currentCorrect).forEach(key => {
+                if (zones[key] !== currentCorrect[key]) {
+                    isCorrect = false;
+                }
+            });
+            const feedbackEl = document.getElementById('drag-feedback');
+            if (isCorrect) {
+                feedbackEl.textContent = '正确！问题2完成。任务完成！';
+                feedbackEl.className = 'feedback correct';
+                feedbackEl.style.display = 'block';
+                setTimeout(backToMain, 2000);
+            } else {
+                feedbackEl.textContent = '错误！请重新尝试。';
+                feedbackEl.className = 'feedback incorrect';
+                feedbackEl.style.display = 'block';
+                setTimeout(resetDragDrop, 2000);
+            }
+        }
+        function resetDragDrop() {
+            const zoneIds = ['input-zone', 'judgment-zone', 'yes-zone', 'no-zone'];
+            const list = document.getElementById('components-list');
+            zoneIds.forEach(zoneId => {
+                const zone = document.getElementById(zoneId);
+                while (zone.firstChild) {
+                    const img = zone.firstChild;
+                    img.style.width = '';  // 修复：移除内联宽度，让CSS控制
+                    img.style.height = 'auto';
+                    img.style.objectFit = '';
+                    list.appendChild(img);
+                }
+            });
+            const feedbackEl = document.getElementById('drag-feedback');
+            feedbackEl.textContent = '';
+            feedbackEl.className = 'feedback';
+            feedbackEl.style.display = 'none';
+        }
+        // 动态调整drop zones
+        function adjustZones() {
+            const img = document.getElementById('skeleton');
+            if (!img.complete) {
+                img.onload = adjustZones;
+                return;
+            }
+            const rect = img.getBoundingClientRect();
+            // 假设原始高度600px, 宽度400px
+            const origHeight = 600;
+            const origWidth = 400;
+            // 输入
+            const inputZone = document.getElementById('input-zone');
+            inputZone.style.top = (110 / origHeight * rect.height) + 'px';
+            inputZone.style.left = (0.43 * rect.width) + 'px';
+            inputZone.style.width = (90 / origWidth * rect.width) + 'px';
+            inputZone.style.height = (60 / origHeight * rect.height) + 'px';
+            // 判断
+            const judgmentZone = document.getElementById('judgment-zone');
+            judgmentZone.style.top = (240 / origHeight * rect.height) + 'px';
+            judgmentZone.style.left = (0.35 * rect.width) + 'px';
+            judgmentZone.style.width = (150 / origWidth * rect.width) + 'px';
+            judgmentZone.style.height = (60 / origHeight * rect.height) + 'px';
+            // 是
+            const yesZone = document.getElementById('yes-zone');
+            yesZone.style.top = (375 / origHeight * rect.height) + 'px';
+            yesZone.style.left = (0.06 * rect.width) + 'px';
+            yesZone.style.width = (100 / origWidth * rect.width) + 'px';
+            yesZone.style.height = (50 / origHeight * rect.height) + 'px';
+            // 否
+            const noZone = document.getElementById('no-zone');
+            noZone.style.top = (375 / origHeight * rect.height) + 'px';
+            noZone.style.left = (0.73 * rect.width) + 'px';
+            noZone.style.width = (100 / origWidth * rect.width) + 'px';
+            noZone.style.height = (50 / origHeight * rect.height) + 'px';
+        }
+    </script>
+</body>
+</html>
